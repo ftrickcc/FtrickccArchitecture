@@ -18,7 +18,6 @@ public/hot
 
 # ⚠️ 3. Locks (sube solo si quieres versiones fijas)
 composer.lock
-package-lock.json
 
 # 🐞 4. Logs y archivos temporales
 *.log

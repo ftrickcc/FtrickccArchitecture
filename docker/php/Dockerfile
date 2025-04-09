@@ -1,7 +1,10 @@
 # Stage 1: Instalar dependencias de Composer
 FROM composer:latest AS composer_deps
 
+# Copiar composer.* y .env.example como .env temporal
 COPY laravel/composer.* /app/
+COPY laravel/.env.example /app/.env
+
 WORKDIR /app
 RUN composer install --no-dev --optimize-autoloader
 

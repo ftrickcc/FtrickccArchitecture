@@ -44,6 +44,9 @@ RUN mkdir -p storage bootstrap/cache && \
     chown -R appuser:appuser /var/www && \
     chmod -R 775 storage bootstrap/cache
 
+# Antes de usar "composer"
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Ejecutar los scripts de Composer en la etapa final (cuando tenemos todos los archivos)
 RUN composer dump-autoload --no-dev --optimize && \
     php artisan package:discover --ansi && \

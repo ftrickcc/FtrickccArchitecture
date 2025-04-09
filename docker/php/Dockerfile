@@ -11,7 +11,8 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 FROM node:20 AS node_deps
 WORKDIR /app
 COPY laravel/package.json laravel/package-lock.json ./
-RUN npm ci --production
+# Quita la bandera --production para instalar también las dependencias de desarrollo
+RUN npm ci
 COPY laravel/. ./
 RUN npm run build
 

@@ -10,7 +10,7 @@ FROM node:20 AS node_deps
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY laravel/package.json laravel/package-lock.json ./
 RUN npm ci --production
 COPY laravel/. ./
 RUN npm run build

@@ -19,10 +19,13 @@ RUN npm run build
 # Stage 3: Imagen final de producción
 FROM php:8.3-fpm
 # Instalar dependencias del sistema
+# Instalar dependencias del sistema y curl (necesario para instalar Composer)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git unzip libpng-dev libwebp-dev libonig-dev libxml2-dev libzip-dev \
-    zip curl libfreetype6-dev libjpeg62-turbo-dev libicu-dev libsqlite3-dev \
+    curl git unzip zip \
+    libpng-dev libwebp-dev libonig-dev libxml2-dev libzip-dev \
+    libfreetype6-dev libjpeg62-turbo-dev libicu-dev libsqlite3-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Instalar extensiones PHP necesarias
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
     docker-php-ext-install \

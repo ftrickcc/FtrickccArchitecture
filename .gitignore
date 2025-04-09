@@ -1,6 +1,5 @@
 # 💾 1. Archivos de configuración sensibles (NO deben subirse)
 .env
-.env.*
 terraform.tfvars
 terraform.tfstate
 terraform.tfstate.*

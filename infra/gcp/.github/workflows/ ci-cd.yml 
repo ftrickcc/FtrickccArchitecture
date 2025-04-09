@@ -1,0 +1,69 @@
+name: "Terraform CI/CD Pipeline"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  TF_WORKSPACE: default
+
+jobs:
+  terraform:
+    name: Terraform Plan & Apply
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .  # Adjust if your main.tf is not in the root
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.3.0
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Select Workspace
+        run: terraform workspace select ${TF_WORKSPACE} || terraform workspace new ${TF_WORKSPACE}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
+
+  post_deploy:
+    name: Post-Deployment Testing
+    runs-on: ubuntu-latest
+    needs: terraform
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Install kubectl
+        run: |
+          sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+      - name: Get GKE Credentials
+        run: |
+          # Make sure to set these secrets in your GitHub repository:
+          # GCP_SA_KEY and GCP_PROJECT_ID
+          gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
+          gcloud container clusters get-credentials ${module.gke_cluster.name} --zone ${var.zone} --project ${{ secrets.GCP_PROJECT_ID }}
+      - name: Run Post-Deploy Tests
+        run: |
+          kubectl rollout status deployment/${{ vars.app_release_name }} --timeout=300s
+          # Add integration tests (curl, HTTP tests, etc.) below to validate the deployment

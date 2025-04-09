@@ -1,0 +1,63 @@
+  services:
+    app:
+      build:
+        context: .
+        dockerfile: ./docker/php/Dockerfile
+      container_name: laravel-app
+      restart: unless-stopped
+      volumes:
+        - ./laravel:/var/www
+        - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+      networks:
+        - app-network
+      depends_on:
+        - mysql
+
+    webserver:
+      image: nginx:alpine
+      container_name: laravel-nginx
+      restart: unless-stopped
+      ports:
+        - "8080:80"
+      volumes:
+        - ./laravel:/var/www
+        - ./docker/nginx:/etc/nginx/conf.d
+      networks:
+        - app-network
+      depends_on:
+        - app
+
+    mysql:
+      image: mysql:8.0
+      container_name: laravel-mysql
+      restart: unless-stopped
+      environment:
+        MYSQL_DATABASE: ${DB_DATABASE}
+        MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+        MYSQL_PASSWORD: ${DB_PASSWORD}
+        MYSQL_USER: ${DB_USERNAME}
+        SERVICE_TAGS: dev
+        SERVICE_NAME: mysql
+      volumes:
+        - mysql-data:/var/lib/mysql
+        - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+      # Descomenta el puerto 3306 si necesitas acceso externo a MySQL
+      ports:
+        - "3306:3306"
+      networks:
+        - app-network
+    node:
+      image: node:18
+      container_name: node-app
+      working_dir: /var/www
+      volumes:
+        - .:/var/www
+      tty: true
+
+  networks:
+    app-network:
+      driver: bridge
+
+  volumes:
+    mysql-data:
+      driver: local

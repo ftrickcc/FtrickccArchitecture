@@ -25,3 +25,4 @@ ftrickArchitecture/
 ├── .github/workflows/      # Pipelines de CI/CD con GitHub Actions
 ├── manifests/              # Archivos declarativos para Argo CD y Kubernetes
 └── docker/                 # Dockerfiles y configuración de contenedores
+# trigger build

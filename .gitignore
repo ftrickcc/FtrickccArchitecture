@@ -46,3 +46,4 @@ infra/gcp/credentials.json
 # 🔧 9. IDEs y herramientas
 .vscode/
 .idea/
+laravel/public/storage

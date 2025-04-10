@@ -12,15 +12,14 @@ output "master_auth" {
 }
 
 output "kubernetes_host" {
-  value = "https://${google_container_cluster.primary.endpoint}"
-}
-
-output "kubernetes_token" {
-  value = data.google_client_config.default.access_token
-  sensitive = true
+  value = google_container_cluster.primary.endpoint
 }
 
 output "kubernetes_ca_certificate" {
   value = base64decode(google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
+}
+
+output "kubernetes_token" {
+  value     = data.google_client_config.default.access_token
   sensitive = true
 }

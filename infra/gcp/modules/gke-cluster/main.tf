@@ -4,7 +4,7 @@ resource "google_container_cluster" "primary" {
   deletion_protection = false    # Permite eliminar el cluster fácilmente en pruebas
 
   remove_default_node_pool = true
-  initial_node_count       = 1
+  initial_node_count       = 2
 
   master_auth {
     client_certificate_config {
@@ -19,10 +19,12 @@ resource "google_container_node_pool" "primary_nodes" {
   location   = var.zone
   node_count = var.initial_nodes
 
+  depends_on = [google_container_cluster.primary]
+
   node_config {
     preemptible     = true    # Reduce costos
     machine_type    = var.machine_type
-    disk_size_gb    = 10
+    disk_size_gb    = 30
     service_account = "ftrick-gke-sa@${var.project_id}.iam.gserviceaccount.com"
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform",

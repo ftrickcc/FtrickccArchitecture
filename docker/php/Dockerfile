@@ -46,6 +46,7 @@ RUN groupadd -g 1000 appuser && \
 # Copiar dependencias de Composer y assets compilados
 COPY --from=composer_deps /app/vendor /var/www/vendor
 COPY --from=node_deps /app/public/build /var/www/public/build
+COPY --from=node_deps /app/public /var/www/public
 
 # Copiar el resto del código de Laravel
 COPY laravel/ /var/www

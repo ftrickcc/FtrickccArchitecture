@@ -18,7 +18,7 @@ spec:
         - name: laravel
           image: us-central1-docker.pkg.dev/ftrick-455901/ftrick-laravel/ftrick-laravel:latest
           ports:
-            - containerPort: 9000
+            - containerPort: 80  # Cambiado de 9000 a 80
           envFrom:
             - secretRef:
                 name: laravel-env
@@ -29,4 +29,3 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-

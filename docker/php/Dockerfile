@@ -62,7 +62,7 @@ RUN if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Copiar la configuración personalizada de PHP (se usará si no se monta desde el host)
-COPY php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Establecer directorio de trabajo
 WORKDIR /var/www

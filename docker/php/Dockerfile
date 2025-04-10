@@ -1,69 +1,62 @@
-# Stage 1: Composer dependencies
-FROM composer:2 AS composer_deps
+# Stage 1: Instalar dependencias de Composer
+FROM composer:latest AS composer_deps
+COPY laravel/composer.* /app/
+COPY laravel/.env.example /app/.env.example
 WORKDIR /app
-COPY laravel/composer.json laravel/composer.lock ./
-RUN composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader
-COPY laravel/. .
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Stage 2: Node dependencies
+# Stage 2: Instalar dependencias de Node.js
 FROM node:20 AS node_deps
 WORKDIR /app
 COPY laravel/package.json laravel/package-lock.json ./
-RUN npm install --legacy-peer-deps
-COPY laravel/resources ./resources
-COPY laravel/vite.config.js ./
+RUN npm ci
+COPY laravel/ ./
 RUN npm run build
 
-# Stage 3: PHP build
-FROM php:8.3-fpm AS php_build
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libzip-dev \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libsqlite3-dev \
-    sqlite3 \
-    && docker-php-ext-install pdo pdo_mysql pdo_sqlite zip mbstring exif pcntl bcmath gd
+# Stage 3: Imagen final de producción
+FROM php:8.3-fpm
 
-# Stage 4: Final image
-FROM php:8.3-fpm AS stage-2
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl git unzip zip \
+    libpng-dev libwebp-dev libonig-dev libxml2-dev libzip-dev \
+    libfreetype6-dev libjpeg62-turbo-dev libicu-dev libsqlite3-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    sqlite3 \
-    && docker-php-ext-install pdo pdo_mysql pdo_sqlite
+# Configurar extensiones PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
+    docker-php-ext-install \
+    pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache pdo_sqlite && \
+    docker-php-ext-enable opcache
 
-# Crear usuario no root
-RUN groupadd -g 1000 appuser && useradd -u 1000 -g appuser -m appuser
+# Crear usuario y directorios necesarios con permisos adecuados
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -m appuser && \
+    mkdir -p /var/www/storage/framework/{cache,sessions,views} /var/www/bootstrap/cache && \
+    chown -R appuser:appuser /var/www && \
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Copiar dependencias de composer y node
+# Copiar archivos de la aplicación
 COPY --from=composer_deps /app/vendor /var/www/vendor
 COPY --from=node_deps /app/public/build /var/www/public/build
-
-# Copiar código de la aplicación
 COPY laravel/. /var/www
 
 # Copiar configuración de PHP
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
-# Crear carpetas necesarias y establecer permisos correctos
-RUN mkdir -p /var/www/storage/framework/{cache,sessions,views} /var/www/bootstrap/cache && \
-    chown -R appuser:appuser /var/www && \
-    chmod -R 775 /var/www/storage /var/www/bootstrap/cache && \
-    if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi && \
-    chown appuser:appuser /var/www/.env && \
-    chmod 664 /var/www/.env
-
 WORKDIR /var/www
 
-# Cambiar a usuario no root
-USER appuser
+# Configurar .env si no existe
+RUN if [ ! -f .env ]; then cp .env.example .env; fi && \
+    chown appuser:appuser .env && \
+    chmod 664 .env
 
-# Ejecutar comandos Artisan
+# Asegurar permisos de directorios críticos
+RUN chown -R appuser:appuser /var/www/storage /var/www/bootstrap/cache && \
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# Ejecutar comandos de Laravel como appuser
+USER appuser
 RUN php artisan key:generate --force && \
     composer dump-autoload --optimize && \
     php artisan storage:link && \
@@ -72,6 +65,5 @@ RUN php artisan key:generate --force && \
     php artisan route:cache && \
     php artisan view:cache
 
-# Exponer puerto y definir comando por defecto
 EXPOSE 9000
 CMD ["php-fpm"]

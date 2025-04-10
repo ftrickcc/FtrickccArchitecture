@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: laravel-ingress
-  namespace: default # <-- asegúrate de usar el namespace correcto donde esté tu servicio Laravel
+  namespace: default
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -10,8 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: laravel.local # <-- agrega un host para que lo puedas mapear en /etc/hosts
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

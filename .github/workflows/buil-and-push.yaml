@@ -8,7 +8,7 @@ on:
 env:
   PROJECT_ID: ftrick-455901
   REGION: us-central1
-  REPOSITORY: laravel-repo
+  REPOSITORY: ftrick-laravel 
   IMAGE_NAME: ftrick-laravel
 
 jobs:

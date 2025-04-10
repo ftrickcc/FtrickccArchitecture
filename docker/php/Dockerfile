@@ -47,13 +47,15 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
 RUN groupadd -g 1000 appuser && \
     useradd -u 1000 -g appuser -m appuser
 
-# Copiar dependencias instaladas con Composer y Node.js
+# Copiar dependencias instaladas en etapas anteriores
 COPY --from=composer_deps /app/vendor /var/www/vendor
 COPY --from=node_deps /app/public/build /var/www/public/build
 
 # Copiar el resto del código de Laravel
-# Esto copia todos los archivos, incluyendo .env.example (recordar que .env no se sube)
 COPY laravel/ /var/www
+
+# Copiar el binario de Composer desde la etapa composer_deps
+COPY --from=composer_deps /usr/bin/composer /usr/bin/composer
 
 # Si no existe .env, crearlo a partir de .env.example
 RUN if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi \
@@ -61,10 +63,10 @@ RUN if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi \
     && chown -R appuser:appuser /var/www \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Copiar la configuración personalizada de PHP (se usará si no se monta desde el host)
+# Copiar la configuración personalizada de PHP
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
-# Establecer directorio de trabajo
+# Establecer el directorio de trabajo
 WORKDIR /var/www
 
 # Cambiar a usuario no root

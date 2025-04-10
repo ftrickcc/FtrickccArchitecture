@@ -11,8 +11,6 @@ credentials.json
 # 🗂 2. Laravel: archivos innecesarios o generados
 /vendor/
 node_modules/
-storage/
-public/storage
 public/hot
 
 # ⚠️ 3. Locks (sube solo si quieres versiones fijas)

@@ -29,41 +29,40 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
     pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache pdo_sqlite && \
     docker-php-ext-enable opcache
 
-# Crear usuario y directorios necesarios con permisos adecuados
+# Crear usuario
 RUN groupadd -g 1000 appuser && \
-    useradd -u 1000 -g appuser -m appuser && \
-    mkdir -p /var/www/storage/framework/{cache,sessions,views} /var/www/bootstrap/cache && \
-    chown -R appuser:appuser /var/www && \
-    chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+    useradd -u 1000 -g appuser -m appuser
 
 # Copiar archivos de la aplicación
 COPY --from=composer_deps /app/vendor /var/www/vendor
 COPY --from=node_deps /app/public/build /var/www/public/build
 COPY laravel/. /var/www
 
+# Crear directorios críticos y ajustar permisos (como root)
+RUN mkdir -p /var/www/storage/framework/{cache,sessions,views} \
+    /var/www/bootstrap/cache \
+    && chown -R appuser:appuser /var/www \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# Configurar .env si no existe
+RUN if [ ! -f .env ]; then cp .env.example .env; fi \
+    && chown appuser:appuser .env \
+    && chmod 664 .env
+
 # Copiar configuración de PHP
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 WORKDIR /var/www
 
-# Configurar .env si no existe
-RUN if [ ! -f .env ]; then cp .env.example .env; fi && \
-    chown appuser:appuser .env && \
-    chmod 664 .env
-
-# Asegurar permisos de directorios críticos
-RUN chown -R appuser:appuser /var/www/storage /var/www/bootstrap/cache && \
-    chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
 # Ejecutar comandos de Laravel como appuser
 USER appuser
-RUN php artisan key:generate --force && \
-    composer dump-autoload --optimize && \
-    php artisan storage:link && \
-    php artisan package:discover --ansi && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+RUN php artisan key:generate --force \
+    && composer dump-autoload --optimize \
+    && php artisan storage:link \
+    && php artisan package:discover --ansi \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
 EXPOSE 9000
 CMD ["php-fpm"]

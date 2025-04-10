@@ -28,58 +28,44 @@ RUN npm run build
 #############################################
 # Stage 3: Imagen final de producción (PHP-FPM)
 #############################################
-FROM php:8.3-fpm
+FROM php:8.3-fpm AS base
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      curl git unzip zip \
-      libpng-dev libwebp-dev libonig-dev libxml2-dev libzip-dev \
-      libfreetype6-dev libjpeg62-turbo-dev libicu-dev libsqlite3-dev \
+# Dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    nginx curl git unzip zip \
+    libpng-dev libwebp-dev libonig-dev libxml2-dev libzip-dev \
+    libfreetype6-dev libjpeg62-turbo-dev libicu-dev libsqlite3-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Configurar y habilitar extensiones PHP necesarias
+# Instalar extensiones PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
     docker-php-ext-install \
-      pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache pdo_sqlite && \
-    docker-php-ext-enable opcache
+    pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache pdo_sqlite
 
-# Crear usuario no root
-RUN groupadd -g 1000 appuser && \
-    useradd -u 1000 -g appuser -m appuser
+# Copiar archivos Laravel
+COPY laravel /var/www
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copiar dependencias instaladas en etapas anteriores
-COPY --from=composer_deps /app/vendor /var/www/vendor
-COPY --from=node_deps /app/public/build /var/www/public/build
-
-# Copiar el resto del código de Laravel
-COPY laravel/ /var/www
-
-# Copiar el binario de Composer desde la etapa composer_deps
-COPY --from=composer_deps /usr/bin/composer /usr/bin/composer
-
-# Si no existe .env, crearlo a partir de .env.example
-RUN if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi \
-    && mkdir -p /var/www/storage/framework/{cache,sessions,views} /var/www/bootstrap/cache \
-    && chown -R appuser:appuser /var/www \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
-# Copiar la configuración personalizada de PHP
-COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
-
-# Establecer el directorio de trabajo
 WORKDIR /var/www
 
-# Cambiar a usuario no root
-USER appuser
-
-# Ejecutar comandos de preparación de Laravel
-RUN php artisan key:generate --force && \
-    composer dump-autoload --optimize && \
-    php artisan storage:link && \
-    php artisan package:discover --ansi && \
+# Instalar dependencias de Laravel
+RUN composer install --no-dev --optimize-autoloader && \
     php artisan config:cache && \
     php artisan route:cache && \
-    php artisan view:cache
+    php artisan view:cache && \
+    php artisan storage:link && \
+    php artisan key:generate --force
 
-EXPOSE 9000
-CMD ["php-fpm"]
+# Crear usuario
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -m appuser && \
+    chown -R appuser:appuser /var/www
+
+USER appuser
+
+# Copiar config personalizada de nginx y php
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+
+EXPOSE 80
+CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]

@@ -1,3 +1,18 @@
+# Stage 1: Instalar dependencias de Composer
+FROM composer:latest AS composer_deps
+COPY laravel/composer.* /app/
+COPY laravel/.env.example /app/.env
+WORKDIR /app
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Stage 2: Instalar dependencias de Node.js
+FROM node:20 AS node_deps
+WORKDIR /app
+COPY laravel/package.json laravel/package-lock.json ./
+RUN npm ci
+COPY laravel/. ./
+RUN npm run build
+
 # Stage 3: Imagen final de producción
 FROM php:8.3-fpm
 

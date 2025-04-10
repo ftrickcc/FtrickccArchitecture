@@ -39,14 +39,16 @@ COPY --from=node_deps /app/public/build /var/www/public/build
 COPY laravel/. /var/www
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
-# Configurar directorios y permisos
 WORKDIR /var/www
-RUN mkdir -p storage/framework/{cache,sessions,views} bootstrap/cache && \
+
+# Nos aseguramos que el storage y bootstrap/cache existan y tengan dueño correcto
+RUN mkdir -p /var/www/storage/framework/{cache,sessions,views} /var/www/bootstrap/cache && \
     chown -R appuser:appuser /var/www && \
-    chmod -R 775 storage bootstrap/cache && \
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache && \
     if [ ! -f .env ]; then cp .env.example .env; fi && \
     chown appuser:appuser .env && \
     chmod 664 .env
+
 
 # Ejecutar comandos de Laravel
 USER appuser

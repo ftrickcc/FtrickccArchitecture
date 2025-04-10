@@ -31,9 +31,6 @@ composer.lock
 .DS_Store
 Thumbs.db
 
-# 🐳 6. Docker (archivos de desarrollo opcionales)
-docker-compose.override.yml
-docker-compose.dev.yml
 
 # 🧪 7. CI/CD: archivos generados o temporales
 cicd/artifacts/

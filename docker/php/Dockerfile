@@ -80,5 +80,5 @@ RUN php artisan key:generate --force && \
 # Exponer puertos: NGINX (80)
 EXPOSE 80
 
-# Lanzar PHP-FPM en segundo plano y luego NGINX
-CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+USER root
+CMD ["sh", "-c", "php-fpm && nginx -g 'daemon off;'"]

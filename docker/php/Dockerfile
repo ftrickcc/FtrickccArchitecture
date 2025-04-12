@@ -83,10 +83,13 @@ RUN php artisan key:generate --force && \
     php artisan route:cache && \
     php artisan view:cache
 
+# Volver a root para el comando de inicio
+USER root
 
 # Exponer puertos: NGINX (80)
 EXPOSE 80
 
 # Cambia el CMD para añadir más verbosidad y asegurar el orden de inicio
 
-CMD ["sh", "-c", "mkdir -p /var/log/php-fpm && chown -R appuser:appuser /var/log/php-fpm && php-fpm --nodaemonize --allow-to-run-as-root & nginx -g 'daemon off;'"]
+CMD ["sh", "-c", "mkdir -p /var/lib/nginx/body /var/lib/nginx/fastcgi /var/lib/nginx/proxy /var/lib/nginx/scgi /var/lib/nginx/uwsgi /var/log/php-fpm && chown -R appuser:appuser /var/log/php-fpm && nginx && php-fpm"]
+

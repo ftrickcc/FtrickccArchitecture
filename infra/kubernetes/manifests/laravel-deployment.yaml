@@ -14,6 +14,9 @@ spec:
       labels:
         app: laravel
     spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 0  # Temporalmente usar root para debug
       containers:
         - name: laravel
           image: us-central1-docker.pkg.dev/ftrick-455901/ftrick-laravel/ftrick-laravel:latest

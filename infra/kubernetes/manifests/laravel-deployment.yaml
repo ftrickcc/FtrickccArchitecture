@@ -22,16 +22,9 @@ spec:
           image: us-central1-docker.pkg.dev/ftrick-455901/ftrick-laravel/ftrick-laravel:latest
           ports:
             - containerPort: 80
-          # Elimina envFrom si decides usar la opción de montaje
-          # envFrom:
-          #   - secretRef:
-          #       name: laravel-env
-          volumeMounts:
-            - name: php-logs
-              mountPath: /var/log/php-fpm
-            - name: env-file
-              mountPath: /var/www/.env
-              subPath: .env
+          envFrom:
+            - secretRef:
+                name: laravel-env
           resources:
             requests:
               memory: "256Mi"
@@ -39,12 +32,9 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          volumeMounts:
+            - name: php-logs
+              mountPath: /var/log/php-fpm
       volumes:
         - name: php-logs
           emptyDir: {}
-        - name: env-file
-          secret:
-            secretName: laravel-env
-            items:
-              - key: .env
-                path: .env

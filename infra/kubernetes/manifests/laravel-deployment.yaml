@@ -29,15 +29,9 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 10
-            periodSeconds: 5
+          volumeMounts:
+            - name: php-logs
+              mountPath: /var/log/php-fpm
+      volumes:
+        - name: php-logs
+          emptyDir: {}

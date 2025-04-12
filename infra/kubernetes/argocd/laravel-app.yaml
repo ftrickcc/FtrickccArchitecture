@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: 'https://github.com/ftrickcc/FtrickccArchitecture'
     targetRevision: HEAD
-    path: kubernetes/manifests
+    path: infra/kubernetes/manifests
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: default

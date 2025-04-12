@@ -64,6 +64,12 @@ RUN if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi \
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
+USER root
+RUN mkdir -p /var/log/php-fpm
+COPY docker/php-fpm/www.conf /usr/local/etc/php-fpm.d/www.conf
+RUN chown -R appuser:appuser /var/log/php-fpm
+
+
 # Establecer directorio de trabajo
 WORKDIR /var/www
 USER appuser
@@ -77,14 +83,10 @@ RUN php artisan key:generate --force && \
     php artisan route:cache && \
     php artisan view:cache
 
-# Configurar NGINX y PHP-FPM
-RUN mkdir -p /var/log/php-fpm
-COPY docker/php-fpm/www.conf /usr/local/etc/php-fpm.d/www.conf
-RUN chown -R appuser:appuser /var/log/php-fpm
 
 # Exponer puertos: NGINX (80)
 EXPOSE 80
 
 # Cambia el CMD para añadir más verbosidad y asegurar el orden de inicio
-USER root
+
 CMD ["sh", "-c", "mkdir -p /var/log/php-fpm && chown -R appuser:appuser /var/log/php-fpm && php-fpm --nodaemonize --allow-to-run-as-root & nginx -g 'daemon off;'"]

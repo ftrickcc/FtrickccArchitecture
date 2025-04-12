@@ -54,8 +54,7 @@ COPY laravel/ /var/www
 # Copiar Composer binario
 COPY --from=composer_deps /usr/bin/composer /usr/bin/composer
 
-# Crear .env si no existe y dar permisos
-RUN if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi \
+RUN touch /var/www/.env \
     && mkdir -p /var/www/storage/framework/{cache,sessions,views} /var/www/bootstrap/cache \
     && chown -R appuser:appuser /var/www \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache

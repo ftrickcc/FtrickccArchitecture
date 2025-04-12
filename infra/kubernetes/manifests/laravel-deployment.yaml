@@ -35,6 +35,14 @@ spec:
           volumeMounts:
             - name: php-logs
               mountPath: /var/log/php-fpm
+            # Añadir esta sección para la configuración de Nginx
+            - name: nginx-config
+              mountPath: /etc/nginx/sites-enabled/default
+              subPath: default.conf
       volumes:
         - name: php-logs
           emptyDir: {}
+        # Añadir este volumen para la configuración de Nginx
+        - name: nginx-config
+          configMap:
+            name: nginx-config

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-entrypoint
+data:
+  entrypoint.sh: |
+    #!/bin/sh
+    rm -f /etc/nginx/conf.d/default.conf
+    nginx -s reload || service nginx restart
+    exec "$@"
